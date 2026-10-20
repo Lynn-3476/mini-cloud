@@ -1,11 +1,9 @@
-// State Management Aplikasi Mini Cloud
 let filesData = JSON.parse(localStorage.getItem('mini_cloud_files')) || [
     { id: '1', name: 'Dokumen Penting', type: 'folder', size: 0, starred: true, date: new Date().toISOString() },
-    { id: '2', name: 'Catatan_Rapat.txt', type: 'file', size: 1024 * 150, starred: false, date: new Date().toISOString() },
-    { id: '3', name: 'Laporan_Keuangan.pdf', type: 'file', size: 1024 * 1024 * 2.5, starred: true, date: new Date().toISOString() }
+    { id: '2', name: 'Catatan_Rapat.txt', type: 'file', size: 1024 * 150, starred: false, date: new Date().toISOString() }
 ];
 
-const MAX_STORAGE = 50 * 1024 * 1024; // 50 MB dalam bytes
+const MAX_STORAGE = 50 * 1024 * 1024; // 50 MB
 
 document.addEventListener('DOMContentLoaded', () => {
     initTabs();
@@ -14,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAll();
 });
 
-// Render Semua Komponen
 function renderAll() {
     sortFilesAlphabetically();
     renderMainGrid();
@@ -23,22 +20,18 @@ function renderAll() {
     saveToLocalStorage();
 }
 
-// Persistensi LocalStorage
 function saveToLocalStorage() {
     localStorage.setItem('mini_cloud_files', JSON.stringify(filesData));
 }
 
-// 1. Fitur Tambahan 1: Urutkan File & Folder secara Abjad (A-Z)
 function sortFilesAlphabetically() {
     filesData.sort((a, b) => {
-        // Folder didahulukan, lalu file, diurutkan secara case-insensitive A-Z
         if (a.type === 'folder' && b.type !== 'folder') return -1;
         if (a.type !== 'folder' && b.type === 'folder') return 1;
         return a.name.localeCompare(b.name, 'id', { sensitivity: 'base' });
     });
 }
 
-// Tab Switching Logic
 function initTabs() {
     const navButtons = document.querySelectorAll('.nav-btn');
     navButtons.forEach(btn => {
@@ -55,84 +48,97 @@ function initTabs() {
     });
 }
 
-// 2. Fitur Utama: Upload File & Folder + Drag and Drop
+// Debugged Upload & Drag-Drop Listeners
 function initUploadListeners() {
     const fileInput = document.getElementById('file-input');
     const folderInput = document.getElementById('folder-input');
     const dropZone = document.getElementById('drop-zone');
 
-    fileInput.addEventListener('change', (e) => handleFilesUpload(e.target.files));
-    folderInput.addEventListener('change', (e) => handleFilesUpload(e.target.files));
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            handleFilesUpload(e.target.files);
+            e.target.value = ''; // Reset input agar bisa upload file yang sama kembali
+        });
+    }
 
-    // Drag and Drop Events
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        }, false);
-    });
+    if (folderInput) {
+        folderInput.addEventListener('change', (e) => {
+            handleFilesUpload(e.target.files);
+            e.target.value = '';
+        });
+    }
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-        }, false);
-    });
+    if (dropZone) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('dragover');
+            });
+        });
 
-    dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const droppedFiles = dt.files;
-        handleFilesUpload(droppedFiles);
-    });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (dt && dt.files) {
+                handleFilesUpload(dt.files);
+            }
+        });
+    }
 }
 
 function handleFilesUpload(fileList) {
     if (!fileList || fileList.length === 0) return;
 
-    let totalNewSize = 0;
+    let addedCount = 0;
     Array.from(fileList).forEach(file => {
-        totalNewSize += file.size;
-    });
-
-    const currentUsed = getCurrentStorageSize();
-    if (currentUsed + totalNewSize > MAX_STORAGE) {
-        showNotification('Kapasitas penyimpanan 50 MB tidak mencukupi!', 'info');
-        return;
-    }
-
-    Array.from(fileList).forEach(file => {
-        const isFolder = file.webkitRelativePath && file.webkitRelativePath.includes('/');
-        // Ambil nama folder utama jika menggunakan webkitdirectory
         let itemName = file.name;
-        if (file.webkitRelativePath) {
+        let isFolder = false;
+
+        // Deteksi apakah file berasal dari struktur folder webkitdirectory
+        if (file.webkitRelativePath && file.webkitRelativePath.includes('/')) {
             const pathParts = file.webkitRelativePath.split('/');
-            itemName = pathParts[0]; // Ambil nama folder teratas
+            itemName = pathParts[0]; // Ambil nama folder utama
+            isFolder = true;
         }
 
-        // Cek jika item dengan nama yang sama sudah ada (khusus folder agar tidak duplikat)
-        const exists = filesData.some(f => f.name === itemName);
+        // Cek duplikasi untuk folder agar tidak entri ganda
+        const exists = filesData.some(f => f.name === itemName && f.type === (isFolder ? 'folder' : 'file'));
+        
         if (!exists) {
             filesData.push({
-                id: 'id_' + Date.now() + Math.random().toString(36.substring(2, 9)),
+                id: 'id_' + Date.now() + Math.random().toString(36).substring(2, 9),
                 name: itemName,
-                type: (isFolder || file.webkitRelativePath) ? 'folder' : 'file',
-                size: file.size,
+                type: isFolder ? 'folder' : 'file',
+                size: file.size || 0,
                 starred: false,
                 date: new Date().toISOString()
             });
+            addedCount++;
         }
     });
 
     renderAll();
-    showNotification(`Berhasil mengunggah ${fileList.length} item baru!`, 'success');
+    if (addedCount > 0) {
+        showNotification(`Berhasil mengunggah ${addedCount} item baru!`, 'success');
+    } else {
+        showNotification(`Item tersebut sudah ada di dalam cloud.`, 'info');
+    }
 }
 
-// 3. Fitur Utama: UI/UX Melihat File & Folder (Main Grid)
 function renderMainGrid() {
     const grid = document.getElementById('main-file-grid');
     const searchQuery = document.getElementById('search-input').value.toLowerCase();
-    
     const filteredFiles = filesData.filter(f => f.name.toLowerCase().includes(searchQuery));
+
+    if (!grid) return;
 
     if (filteredFiles.length === 0) {
         grid.innerHTML = `
@@ -145,13 +151,13 @@ function renderMainGrid() {
     }
 
     grid.innerHTML = filteredFiles.map(item => createFileCardHTML(item)).join('');
-    attachCardListeners();
 }
 
-// 4. Fitur Tambahan 2: Section Berbintang (Starred UI/UX terpisah)
 function renderStarredGrid() {
     const grid = document.getElementById('starred-file-grid');
     const starredFiles = filesData.filter(item => item.starred);
+
+    if (!grid) return;
 
     if (starredFiles.length === 0) {
         grid.innerHTML = `
@@ -164,7 +170,6 @@ function renderStarredGrid() {
     }
 
     grid.innerHTML = starredFiles.map(item => createFileCardHTML(item)).join('');
-    attachCardListeners();
 }
 
 function createFileCardHTML(item) {
@@ -173,8 +178,6 @@ function createFileCardHTML(item) {
         iconClass = 'fa-folder';
     } else if (item.name.endsWith('.pdf')) {
         iconClass = 'fa-file-pdf';
-    } else if (item.name.match(/\.(jpg|jpeg|png|gif)$/i)) {
-        iconClass = 'fa-file-image';
     }
 
     const starClass = item.starred ? 'fa-solid fa-star starred' : 'fa-regular fa-star';
@@ -201,7 +204,6 @@ function createFileCardHTML(item) {
     `;
 }
 
-// Aksi Toggle Bintang (Starred)
 window.toggleStar = function(id) {
     const item = filesData.find(f => f.id === id);
     if (item) {
@@ -211,16 +213,13 @@ window.toggleStar = function(id) {
     }
 }
 
-// Aksi Unduh File (Fitur 4: Notifikasi luar & dalam)
 window.downloadItem = function(id) {
     const item = filesData.find(f => f.id === id);
     if (item) {
         showNotification(`Mengunduh: ${item.name}`, 'success');
-        triggerBrowserNotification('Unduhan Dimulai', `File ${item.name} sedang diunduh.`);
     }
 }
 
-// Aksi Hapus Item
 window.deleteItem = function(id) {
     const itemIndex = filesData.findIndex(f => f.id === id);
     if (itemIndex !== -1) {
@@ -231,7 +230,6 @@ window.deleteItem = function(id) {
     }
 }
 
-// 3. Fitur Utama: Indikator Jumlah Penyimpanan Terpakai
 function getCurrentStorageSize() {
     return filesData.reduce((acc, curr) => acc + (curr.size || 0), 0);
 }
@@ -240,8 +238,11 @@ function updateStorageUsage() {
     const usedBytes = getCurrentStorageSize();
     const percentage = Math.min((usedBytes / MAX_STORAGE) * 100, 100);
     
-    document.getElementById('storage-text').innerText = `${formatBytes(usedBytes)} / 50 MB`;
-    document.getElementById('progress-fill').style.width = `${percentage}%`;
+    const storageText = document.getElementById('storage-text');
+    const progressFill = document.getElementById('progress-fill');
+    
+    if (storageText) storageText.innerText = `${formatBytes(usedBytes)} / 50 MB`;
+    if (progressFill) progressFill.style.width = `${percentage}%`;
 }
 
 function formatBytes(bytes, decimals = 2) {
@@ -253,17 +254,19 @@ function formatBytes(bytes, decimals = 2) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-// Pencarian Real-Time
 function initSearch() {
     const searchInput = document.getElementById('search-input');
-    searchInput.addEventListener('input', () => {
-        renderMainGrid();
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            renderMainGrid();
+        });
+    }
 }
 
-// 4. Fitur Utama: Notifikasi di Dalam dan Luar Cloud
 function showNotification(message, type = 'success') {
     const container = document.getElementById('toast-container');
+    if (!container) return;
+    
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
@@ -276,34 +279,4 @@ function showNotification(message, type = 'success') {
     setTimeout(() => {
         toast.remove();
     }, 3000);
-}
-
-// Fitur Notifikasi Luar (Browser Notification API)
-const notifyBtn = document.getElementById('notify-permission-btn');
-notifyBtn.addEventListener('click', () => {
-    if (!("Notification" in window)) {
-        alert("Browser ini tidak mendukung desktop notification.");
-    } else if (Notification.permission === "granted") {
-        showNotification("Notifikasi luar sudah aktif!", "success");
-        triggerBrowserNotification("Mini Cloud", "Sistem notifikasi luar aktif dan berjalan.");
-    } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-                showNotification("Izin notifikasi diberikan!", "success");
-            }
-        });
-    }
-});
-
-function triggerBrowserNotification(title, body) {
-    if (Notification.permission === "granted") {
-        new Notification(title, {
-            body: body,
-            icon: 'https://cdn-icons-png.flaticon.com/512/109/109613.png'
-        });
-    }
-}
-
-function attachCardListeners() {
-    // Bisa ditambahkan event tambahan jika diperlukan
 }
