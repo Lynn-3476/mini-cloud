@@ -56,14 +56,18 @@ function initUploadListeners() {
 
     if (fileInput) {
         fileInput.addEventListener('change', (e) => {
-            handleFilesUpload(e.target.files);
-            e.target.value = ''; // Reset input agar bisa upload file yang sama kembali
+            if (e.target.files && e.target.files.length > 0) {
+                handleFilesUpload(e.target.files);
+            }
+            e.target.value = ''; // Reset value agar file yang sama bisa di-upload kembali
         });
     }
 
     if (folderInput) {
         folderInput.addEventListener('change', (e) => {
-            handleFilesUpload(e.target.files);
+            if (e.target.files && e.target.files.length > 0) {
+                handleFilesUpload(e.target.files);
+            }
             e.target.value = '';
         });
     }
@@ -87,7 +91,7 @@ function initUploadListeners() {
 
         dropZone.addEventListener('drop', (e) => {
             const dt = e.dataTransfer;
-            if (dt && dt.files) {
+            if (dt && dt.files && dt.files.length > 0) {
                 handleFilesUpload(dt.files);
             }
         });
@@ -102,14 +106,14 @@ function handleFilesUpload(fileList) {
         let itemName = file.name;
         let isFolder = false;
 
-        // Deteksi apakah file berasal dari struktur folder webkitdirectory
+        // Deteksi apakah item berupa folder via webkitdirectory / path hierarki
         if (file.webkitRelativePath && file.webkitRelativePath.includes('/')) {
             const pathParts = file.webkitRelativePath.split('/');
-            itemName = pathParts[0]; // Ambil nama folder utama
+            itemName = pathParts[0]; 
             isFolder = true;
         }
 
-        // Cek duplikasi untuk folder agar tidak entri ganda
+        // Cek apakah item dengan nama dan tipe yang sama sudah ada
         const exists = filesData.some(f => f.name === itemName && f.type === (isFolder ? 'folder' : 'file'));
         
         if (!exists) {
@@ -135,7 +139,8 @@ function handleFilesUpload(fileList) {
 
 function renderMainGrid() {
     const grid = document.getElementById('main-file-grid');
-    const searchQuery = document.getElementById('search-input').value.toLowerCase();
+    const searchInput = document.getElementById('search-input');
+    const searchQuery = searchInput ? searchInput.value.toLowerCase() : '';
     const filteredFiles = filesData.filter(f => f.name.toLowerCase().includes(searchQuery));
 
     if (!grid) return;
@@ -178,6 +183,8 @@ function createFileCardHTML(item) {
         iconClass = 'fa-folder';
     } else if (item.name.endsWith('.pdf')) {
         iconClass = 'fa-file-pdf';
+    } else if (item.name.match(/\.(jpg|jpeg|png|gif)$/i)) {
+        iconClass = 'fa-file-image';
     }
 
     const starClass = item.starred ? 'fa-solid fa-star starred' : 'fa-regular fa-star';
