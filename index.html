@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Cloud - Cloud Storage Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome untuk ikon modern -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="cloud-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-cloud"></i>
+                <h2>Mini Cloud</h2>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="all-files">
+                    <i class="fa-solid fa-folder-open"></i> Semua File
+                </button>
+                <button class="nav-btn" data-tab="starred-files">
+                    <i class="fa-solid fa-star"></i> Berbintang
+                </button>
+            </nav>
+
+            <!-- Storage Widget (Fitur 3) -->
+            <div class="storage-widget">
+                <div class="storage-info">
+                    <span><i class="fa-solid fa-hard-drive"></i> Penyimpanan</span>
+                    <span id="storage-text">0 MB / 50 MB</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p class="storage-limit">Kapasitas Maksimal 50 MB</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Cari file atau folder...">
+                </div>
+                <div class="user-profile">
+                    <button id="notify-permission-btn" title="Aktifkan Notifikasi Luar">
+                        <i class="fa-solid fa-bell"></i>
+                    </button>
+                    <div class="avatar">MC</div>
+                </div>
+            </header>
+
+            <!-- Upload Section (Fitur 1) -->
+            <section class="upload-section">
+                <div class="drop-zone" id="drop-zone">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <h3>Tarik & Letakkan File atau Folder di Sini</h3>
+                    <p>Atau gunakan tombol di bawah untuk memilih</p>
+                    <div class="upload-actions">
+                        <label class="btn-primary">
+                            <i class="fa-solid fa-file-arrow-up"></i> Upload File
+                            <input type="file" id="file-input" multiple hidden>
+                        </label>
+                        <label class="btn-secondary">
+                            <i class="fa-solid fa-folder-plus"></i> Upload Folder
+                            <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Content Views Container -->
+            <div class="content-views">
+                <!-- Tab 1: Semua File & Folder (Fitur 2 & Tambahan 1) -->
+                <section id="all-files" class="tab-content active">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-list"></i> Daftar File & Folder (A-Z)</h2>
+                        <span class="sort-badge">Urut Abjad Otomatis</span>
+                    </div>
+                    <div class="file-grid" id="main-file-grid">
+                        <!-- Data file akan dirender via JS -->
+                    </div>
+                </section>
+
+                <!-- Tab 2: File Berbintang (Fitur Tambahan 2) -->
+                <section id="starred-files" class="tab-content">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-star text-warning"></i> File & Folder Berbintang</h2>
+                        <span class="sort-badge">Koleksi Prioritas</span>
+                    </div>
+                    <div class="file-grid" id="starred-file-grid">
+                        <!-- Data file berbintang akan dirender via JS -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Container (Fitur 4: In-App Toasts) -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
