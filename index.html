@@ -52,22 +52,23 @@
                 </div>
             </header>
 
-            <!-- Upload Section (Fixed Debugged Drop Zone) -->
+            <!-- Upload Section (Debugged Wrapped Inputs) -->
             <section class="upload-section">
                 <div class="drop-zone" id="drop-zone">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
                     <h3>Tarik & Letakkan File atau Folder di Sini</h3>
                     <p>Atau gunakan tombol di bawah untuk memilih</p>
                     <div class="upload-actions">
-                        <label class="btn-primary" for="file-input">
+                        <!-- Tombol Upload File dengan pembungkus label yang aman -->
+                        <label class="btn-primary">
                             <i class="fa-solid fa-file-arrow-up"></i> Upload File
+                            <input type="file" id="file-input" multiple hidden>
                         </label>
-                        <input type="file" id="file-input" multiple hidden>
-
-                        <label class="btn-secondary" for="folder-input">
+                        <!-- Tombol Upload Folder -->
+                        <label class="btn-secondary">
                             <i class="fa-solid fa-folder-plus"></i> Upload Folder
+                            <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
                         </label>
-                        <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
                     </div>
                 </div>
             </section>
